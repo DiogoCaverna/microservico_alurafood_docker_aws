@@ -24,13 +24,13 @@ Reiniciando o serviço:
 
 Para rodar o MySQL no docker:
 
-      docker run -d -e MYSQL_ROOT_PASSWORD=Killmister66 -p 3306:3306 --name alurafood mysql:latest
+      docker run -d -e MYSQL_ROOT_PASSWORD=************ -p 3306:3306 --name alurafood mysql:latest
 
 _-d: O sinalizador -d (detached mode) faz com que o contêiner seja executado em segundo plano. 
 Assim, você não precisa manter o terminal aberto para que o contêiner continue em execução._
 
-_-e MYSQL_ROOT_PASSWORD=Killmister66: Esta opção -e define uma variável de ambiente dentro do contêiner.
-Neste caso, você está definindo a senha do usuário root do MySQL como Killmister66._
+_-e MYSQL_ROOT_PASSWORD=*************: Esta opção -e define uma variável de ambiente dentro do contêiner.
+Neste caso, você está definindo a senha do usuário root do MySQL como ************._
  
 _-p 3306:3306: O sinalizador -p mapeia uma porta no host (o sistema onde o Docker está rodando) para uma porta dentro do contêiner. 
 Aqui, você está mapeando a porta 3306 do host (sua máquina local) para a porta 3306 do contêiner. 
