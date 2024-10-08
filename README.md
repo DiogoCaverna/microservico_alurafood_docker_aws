@@ -162,6 +162,59 @@ Agora a imagem estará disponível publicamente para que qualquer pessoa possa b
 
       docker pull meuusuario/meuapp:latest
 
+### Para saber mais sobre o Dockerfile: [Desvendando o DockerFile](https://www.alura.com.br/artigos/desvendando-o-dockerfile) ###
+
+
+
+# Migrando para a Cloud #
+
+O Cloudformation é um serviço da AWS, em que temos um arquivo no formato de JSON ou YML, que possui as etapas para subir a infraestrutura e provisionar o recurso. Há também, a opção do Terraform, a mesma lógica do Cloudformation, mas, com a linguagem declarativa disponível para diversas plataformas, além da AWS.
+
+No nosso projeto, usaremos:
+
+-AWS
+
+-AWS Fargate
+
+-Cloud Development Kit com Java
+
+Inicialmente, para preparar o ambiente, precisamos instalar e configurar o AWS CLI, sigla para AWS Command Line Interface, usando as suas credenciais(*AWS Access Key ID e AWS Secret Access Key*).
+
+[Instalar ou atualizar a versão mais recente da AWS CLI](https://docs.aws.amazon.com/pt_br/cli/latest/userguide/getting-started-install.html.)
+
+*Verificar a versão da CLI instalada:*
+
+      aws --version
+
+*É necessário configurar com a sua credencial, para ser possível executar o deploy:*
+
+[Configurar a AWS CLI](https://docs.aws.amazon.com/pt_br/cli/latest/userguide/cli-chap-configure.html)
+
+*Para configurar a AWS CLI, basta digitar o comando:*
+
+      aws configure
+
+É preciso realizar a configuração do [AWS Cloud Development Kit](https://aws.amazon.com/pt/cdk/) 
+
+[Comece a usar o AWS CDK: GUIA DE CONCEITOS BÁSICOS](https://aws.amazon.com/pt/getting-started/guides/setup-cdk/)
+
+instale o CDK através do comando npm install -g aws-cdk. Novamente, será necessário verificar a versão:
+
+      cdk --version
+
+Vamos para o [Módulo 3: Criar o primeiro projeto do AWS CDK do site](https://aws.amazon.com/pt/getting-started/guides/setup-cdk/module-three/). Definiremos a nossa infraestrutura em Java e criaremos o pacote que conterá o projeto.
+
+*No terminal, criaremos uma pasta para o nosso projeto:*
+
+      mkdir alura-aws-infra
+
+*Dentro da pasta digitaremos o comando:*
+
+      cdk init --language java
+
+
+ 
+
 
 
 
