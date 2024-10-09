@@ -212,6 +212,163 @@ Vamos para o [Módulo 3: Criar o primeiro projeto do AWS CDK do site](https://aw
 
       cdk init --language java
 
+## Para saber mais: documentação do CDK ##
+
+O Cloud Development Kit (em português, pacote de desenvolvimento para Cloud) é uma alternativa para que a pessoa desenvolvedora comece a criar seus recursos de aplicação na nuvem da AWS com IaC (infraestrutura como código) de forma mais simples, por utilizar linguagens de programação conhecidas, como Java, JavaScript, TypeScript, Python, C# e Go. Para mais informações sobre o AWS CDK, não deixe de olhar as documentações oficiais que separei abaixo:
+
+-Índice da documentação de [todos os recursos AWS](https://docs.aws.amazon.com/pt_br/)
+
+-O que é o [AWS CDK](https://aws.amazon.com/pt/cdk/#:~:text=O%20AWS%20Cloud%20Development%20Kit,usando%20linguagens%20de%20programa%C3%A7%C3%A3o%20conhecidas.)
+
+-Guia para fazer o [primeiro projeto](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)
+
+-Informações sobre a [VPC](https://docs.aws.amazon.com/pt_br/vpc/latest/userguide/what-is-amazon-vpc.html)
+
+### Para criar os recursos, vamos começar de fora para dentro: ###
+
+_Ordem de criação:_ *VPC, Cluster, Service, Task definition e, por último, o Container definition.*
+
+### [Documentação](https://docs.aws.amazon.com/pt_br/cdk/v2/guide/ecs_example.html) com a explicação de como criar o projeto com alguns materiais complementares. ###
+
+Em *"Create a Fargate service"*, temos um código para criar o VPC, o Cluster e Load Balanced:
+
+        Vpc vpc = Vpc.Builder.create(this, "MyVpc")
+                            .maxAzs(3)  // Default is all AZs in region
+                            .build();
+
+        Cluster cluster = Cluster.Builder.create(this, "MyCluster")
+                            .vpc(vpc).build();
+
+        // Create a load-balanced Fargate service and make it public
+        ApplicationLoadBalancedFargateService.Builder.create(this, "MyFargateService")
+                    .cluster(cluster)           // Required
+                    .cpu(512)                   // Default is 256
+                     .desiredCount(6)            // Default is 1
+                     .taskImageOptions(
+                             ApplicationLoadBalancedTaskImageOptions.builder()
+                                     .image(ContainerImage.fromRegistry("amazon/amazon-ecs-sample"))
+                                     .build())
+                     .memoryLimitMiB(2048)       // Default is 512
+                     .publicLoadBalancer(true)   // Default is false
+                     .build();
+
+
+Na aplicação, vamos copiar a classe *AluraAwsInfraStack.java* para gerar uma stack a partir dela, porque queremos separar as stacks para termos a flexibilidade necessária para alterar depois. Nomearemos a copia da classe como *AluraVpcStack.java*.
+
+No arquivo que será aberto, terá uma parte do código comentada em que podemos remover e colar o seguinte trecho:
+
+              Vpc vpc = Vpc.Builder.create(this, "AluraVpc")
+                      .maxAzs(3)  // Default is all AZs in region
+                      .build();
+
+Os dois parâmetros são: o this, sendo o escopo, no caso é a própria classe, e o AluraVpc é o ID - como chamaremos a VPC. O maxAzs é a quantidade máxima de zonas de disponibilidade que a VPC vai conter.
+
+Agora, vamos na classe principal *AluraAwsInfraApp.java* para chamar essa stack de VPC. Nesse arquivo, removeremos as linhas referentes a stack padrão:
+
+criaremos uma nova VPC:
+
+      new AluraVpcStack(app, "AluraVpc");
+
+Dessa forma, chamamos a stack na classe principal. Agora, vamos no terminal para visualizar essa alteração e realizar o deploy - subir a VPC para o AWS.
+
+Mas antes temos que rodar o *cdk bootstrap aws*, esse comando cria os recursos necessários para que o CDK consiga fazer deploys no ambiente AWS. 
+
+Para rodar o comando, execute:
+
+      cdk bootstrap aws://YOUR_ACCOUNT_ID/us-east-2
+
+Pode ser nescessário enviar as credenciais da conta aws:
+
+      set AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY
+      set AWS_SECRET_ACCESS_KEY=YOUR_SECRET_KEY
+      set AWS_DEFAULT_REGION=us-east-2
+
+Rodaremos o seguinte comando, para identificar o que há de stack no projeto, para subir para a AWS:
+
+      cdk list
+
+No caso, será detectado justamente a stack que criamos. A partir disso, executaremos o comando para subir essa stack para a AWS:
+
+      cdk deploy nome-da-stack
+
+Para criar a VPC e os outros recursos que criaremos adiante, utilizei como documentação base esse [link](https://docs.aws.amazon.com/pt_br/cdk/v2/guide/ecs_example.html) que já possui um código padrão em Java, exemplificando as configurações mínimas requeridas para o início do projeto.
+
+O nosso próximo passo é criar o cluster, sendo o agrupamento lógico de tarefas e serviços. Vamos no código da aplicação, criar essa estrutura para termos mais flexibilidade para modificações:
+
+      import software.amazon.awscdk.services.ecs.Cluster;    //import a ser feito
+      
+      Cluster cluster = Cluster.Builder.create(this, "AluraCluster")
+                            .vpc(vpc).build();
+
+
+Como criamos separado, por classe, precisaremos de uma VPC. Por isso, vamos incluir *'final Vpc vpc'* no construtor:
+
+      
+      //código omitido
+
+      public AluraClusterStack(final Construct scope, final String id, final Vpc vpc) {
+              this(scope, id, null, vpc);
+          }
+
+      public AluraClusterStack(final Construct scope, final String id, final StackProps props, final Vpc vpc) {
+              super(scope, id, props);
+
+      Cluster cluster = Cluster.Builder.create(this, "AluraCluster")
+                .vpc(vpc).build();
+
+      //código omitido
+
+Com essa classe definida, precisamos alterar o codigo da aplicação principal *'AluraAwsInfraApp.java'*:
+
+      public class AluraAwsInfraApp {
+          public static void main(final String[] args) {
+       
+              App app = new App();
+        
+              AluraVpcStack vpcStack = new AluraVpcStack(app, "AluraVpc");
+        
+              AluraClusterStack clusterStack = new AluraClusterStack(app, "AluraCluster", vpcStack.getVpc());
+       
+              clusterStack.addDependency(vpcStack);
+        
+              app.synth();
+          }
+      }
+
+Precisamos expor essa VPC no arquivo *'AluraVpcStack.java'*, ela está criada, mas não está liberada para acesso. Para isso, modificaremos a classe também:
+
+      public class AluraVpcStack extends Stack {
+	
+	      private Vpc vpc;
+	
+          public AluraVpcStack(final Construct scope, final String id) {
+              this(scope, id, null);
+          }
+
+          public AluraVpcStack(final Construct scope, final String id, final StackProps props) {
+              super(scope, id, props);
+        
+              vpc = Vpc.Builder.create(this, "AluraVpc")
+                .maxAzs(3)  // Default is all AZs in region
+                .build();
+
+          }
+    
+          public Vpc getVpc() {
+		return vpc;
+	      }
+      }
+
+
+
+
+
+
+
+
+
+
+
 
  
 
